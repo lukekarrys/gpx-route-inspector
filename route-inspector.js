@@ -1,6 +1,7 @@
 const path = require('path')
 const _ = require('lodash')
 const fs = require('fs')
+const tmp = require('tmp-promise')
 const { exec } = require('child-process-promise')
 
 module.exports = async (csv, start) => {
@@ -8,14 +9,16 @@ module.exports = async (csv, start) => {
   const csvPath = path.resolve(dir, '.output.csv')
   const postmanPath = path.resolve(dir, 'postman_problems')
 
-  fs.writeFileSync(csvPath, csv)
+  const tempCsv = await tmp.file()
+
+  fs.writeFileSync(tempCsv.fd, csv)
 
   const { stderr: res } = await exec(
-    `chinese_postman --edgelist ${csvPath} --start_node ${start}`,
+    `chinese_postman --edgelist ${tempCsv.path} --start_node ${start}`,
     { cwd: postmanPath }
   )
 
-  fs.unlinkSync(csvPath)
+  tempCsv.cleanup()
 
   return res
     .split('\n')

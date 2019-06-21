@@ -15,14 +15,9 @@ const { gpx, start, name, description, type } = require('yargs-parser')(
 )
 
 const FILE_EXT = '.gpx'
-const START_POSITION_SEPARATOR = '|'
 
 ;(async () => {
   let gpxFiles = gpx
-
-  if (gpx.length === 0) {
-    throw new Error('No gpx files')
-  }
 
   if (gpx.length === 1) {
     try {
@@ -38,15 +33,8 @@ const START_POSITION_SEPARATOR = '|'
     }
   }
 
-  const fileNames = gpxFiles.map(f => path.basename(f, FILE_EXT))
-
-  if (!fileNames.includes(start.split(START_POSITION_SEPARATOR)[0])) {
-    throw new Error('start option must be one of the files')
-  }
-
   let res = await routeInspector({
     filePaths: gpxFiles,
-    names: fileNames,
     start,
     name,
     description,

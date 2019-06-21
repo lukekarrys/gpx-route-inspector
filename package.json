@@ -6,12 +6,15 @@
   "dependencies": {
     "@turf/turf": "^5.1.6",
     "child-process-promise": "^2.2.1",
+    "debug": "^4.1.1",
     "lodash": "^4.17.11",
     "node-geo-distance": "^1.2.0",
+    "tmp-promise": "^2.0.1",
     "xml2js": "^0.4.19",
     "yargs-parser": "^13.1.1"
   },
   "devDependencies": {
+    "ava": "^2.1.0",
     "eslint": "^6.0.0-rc.0",
     "prettier": "^1.18.2"
   },
@@ -23,9 +26,12 @@
   ],
   "license": "MIT",
   "main": "index.js",
+  "private": true,
   "scripts": {
+    "build": "./scripts/build.sh",
+    "dev": "./scripts/dev.sh",
     "eslint": "eslint .",
-    "nodemon": "nodemon --exec \"./cli.js .data\" -e \"js json\"",
-    "prettier": "prettier --write '**/*.{js,md,css,json}'"
+    "prettier": "prettier --write '**/*.{js,md,css,json}'",
+    "test": "ava"
   }
 }

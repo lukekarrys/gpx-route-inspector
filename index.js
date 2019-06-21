@@ -5,23 +5,26 @@ const path = require('path')
 const readFile = promisify(fs.readFile)
 const xml2js = require('xml2js')
 const parseXmlString = promisify(xml2js.parseString)
-const geoDistance = require('node-geo-distance').vincentySync
 const turf = require('@turf/turf')
 const routeInspector = require('./route-inspector')
 const package = require('./package.json')
+const debug = require('debug')(package.name)
+const util = require('./util')
 
 const INTERSECTION_THRESHOLD = 35 // in meters
-const SHARED_TRAILHEAD_THRESHOLD = 50 // in meters
+const SHARED_TRAILHEAD_THRESHOLD = 60 // in meters
 const START_POSITION_SEPARATOR = '|'
 const NEARBY_POINT_INDICES = [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5]
 const CREATOR = `${package.name}@${package.version}`
 
+const basenameNoExt = f => path.basename(f, path.extname(f))
+
 const readFiles = files =>
   Promise.all(files.map(file => readFile(file, 'utf-8')))
 
-const gpxToPoints = (file, fileData) =>
+const gpxToPoints = (file, fileName) =>
   file.gpx.trk[0].trkseg[0].trkpt.map((point, index, points) => {
-    const name = path.basename(fileData.name, path.extname(fileData.name))
+    const name = basenameNoExt(fileName)
     return {
       name,
       index: index + 1,
@@ -33,37 +36,23 @@ const gpxToPoints = (file, fileData) =>
     }
   })
 
-const gpxDistance = (point1, point2) =>
-  geoDistance(
-    {
-      latitude: point1.lat,
-      longitude: point1.lon
-    },
-    {
-      latitude: point2.lat,
-      longitude: point2.lon
+const renameGpxPoints = (points, newName) =>
+  points.map((p, index) => {
+    const name = `${p.name}${newName}`
+    return {
+      ...p,
+      name,
+      index: index + 1,
+      total: points.length,
+      id: `${name}-${index + 1}/${points.length}`
     }
-  )
-
-const trackDistance = points =>
-  points.reduce((acc, point, index) => {
-    const next = points[index + 1]
-    return acc + (next == null ? 0 : +gpxDistance(point, next))
-  }, 0)
-
-const trackAeg = points =>
-  points.reduce((acc, point, index) => {
-    const next = points[index + 1]
-    return (
-      acc + (next == null || next.ele <= point.ele ? 0 : next.ele - point.ele)
-    )
-  }, 0)
+  })
 
 const findClosestDifferingTrailPoint = (points, point) =>
   points.reduce(
     (acc, p) => {
-      const distance = +gpxDistance(p, point)
-      if (distance < acc.distance && p.name !== point.name) {
+      const distance = util.gpxDistance(p, point)
+      if (distance < acc.distance && p.id !== point.id) {
         return { point: p, distance }
       }
       return acc
@@ -71,29 +60,77 @@ const findClosestDifferingTrailPoint = (points, point) =>
     { point: null, distance: Number.POSITIVE_INFINITY }
   )
 
+const getEndpoints = arr => [_.first(arr), _.last(arr)]
+
 module.exports = async ({
   type = 'gpx',
   filePaths,
-  names,
   start,
+  names = filePaths.map(basenameNoExt),
   name = names.join(', '),
   description = `The shortest route that visits all the edges of ${names.join(
     ', '
   )}`
 }) => {
-  const gpxFiles = await readFiles(filePaths)
+  if (!filePaths || filePaths.length === 0) {
+    throw new Error('No gpx files')
+  }
+
+  if (
+    !filePaths
+      .map(basenameNoExt)
+      .includes(start.split(START_POSITION_SEPARATOR)[0])
+  ) {
+    throw new Error('start option must be one of the files')
+  }
+
+  const gpxFiles = await readFiles(
+    filePaths.filter(f => !path.basename(f).startsWith('_'))
+  )
   const gpxTrails = await Promise.all(gpxFiles.map(f => parseXmlString(f)))
 
   const trailsPoints = gpxTrails.map((gpxData, index) =>
-    gpxToPoints(gpxData, { name: filePaths[index] })
+    gpxToPoints(gpxData, filePaths[index])
   )
 
-  const trailEndpoints = _.flatten(
-    trailsPoints.map(points => [_.first(points), _.last(points)])
+  const trailEndpoints = []
+  const allEndpoints = []
+  for (let [index, points] of trailsPoints.entries()) {
+    const [start, end] = getEndpoints(points)
+    const isLoop = util.gpxDistance(start, end) < SHARED_TRAILHEAD_THRESHOLD
+
+    if (isLoop) {
+      // Cut a looped trail in half in case it doesnt intersect with anything else
+      // so that we still traverse the whole thing
+      const [firstHalf, secondHalf] = _.chunk(
+        points,
+        Math.ceil(points.length / 2)
+      ).map((points, index, list) => {
+        const sharedPoints =
+          index === 1 ? [_.clone(_.last(list[0])), ...points] : points
+        return renameGpxPoints(sharedPoints, `-SPLIT-${index + 1}`)
+      })
+
+      trailsPoints[index] = firstHalf
+      trailsPoints.splice(index + 1, 0, secondHalf)
+
+      trailEndpoints.push(getEndpoints(firstHalf))
+      trailEndpoints.push(getEndpoints(secondHalf))
+      allEndpoints.push(...getEndpoints(firstHalf))
+      allEndpoints.push(...getEndpoints(secondHalf))
+    } else {
+      trailEndpoints.push([start, end])
+      allEndpoints.push(...[start, end])
+    }
+  }
+
+  debug(
+    'Trails points',
+    JSON.stringify(trailsPoints.map(t => t[0].name), null, 2)
   )
 
   const vertices = []
-  for (let point of trailEndpoints) {
+  for (let point of allEndpoints) {
     const closest = findClosestDifferingTrailPoint(_.flatten(vertices), point)
     const clonedPoint = _.clone(point)
 
@@ -106,6 +143,8 @@ module.exports = async ({
       vertices.push([clonedPoint])
     }
   }
+
+  debug('Vertices', JSON.stringify(vertices.map(v => v.id)))
 
   const flatVerticesEndpoints = _.flatten(vertices)
 
@@ -219,10 +258,15 @@ module.exports = async ({
       points: edge,
       start: firstPoint.id,
       end: lastPoint.id,
-      distance: trackDistance(edge),
-      aeg: trackAeg(edge)
+      distance: util.trackDistance(edge),
+      aeg: util.trackAeg(edge)
     }
   })
+
+  debug(
+    'Edges',
+    JSON.stringify(fullEdges.map(e => `${e.start} -- ${e.end}`), null, 2)
+  )
 
   // Find the id of the vertex that matches the passed in start parameter
   const startVertex = fullVertices.find(vertex => {
@@ -231,7 +275,8 @@ module.exports = async ({
     )
     return vertex.endpoints.find(
       e =>
-        e.name === startName &&
+        (startName === e.name ||
+          startName === e.name.replace('-SPLIT-1', '')) &&
         e.index === (startPosition === 'START' ? 1 : e.total)
     )
   }).id
