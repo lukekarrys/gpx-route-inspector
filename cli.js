@@ -3,7 +3,6 @@
 const { promisify } = require('util')
 const fs = require('fs')
 const path = require('path')
-const Table = require('cli-table')
 const routeInspector = require('./')
 
 const readDir = promisify(fs.readdir)
@@ -54,12 +53,7 @@ const START_POSITION_SEPARATOR = '|'
     type
   })
 
-  if (Array.isArray(res) && Array.isArray(res[0])) {
-    const [head, ...rows] = res
-    const table = new Table({ head })
-    table.push(...rows)
-    res = table.toString()
-  } else if (typeof res == 'object') {
+  if (typeof res == 'object') {
     res = JSON.stringify(res, null, 2)
   }
 
