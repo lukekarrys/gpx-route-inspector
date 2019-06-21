@@ -13,6 +13,7 @@ const package = require('./package.json')
 const INTERSECTION_THRESHOLD = 35 // in meters
 const SHARED_TRAILHEAD_THRESHOLD = 50 // in meters
 const START_POSITION_SEPARATOR = '|'
+const NEARBY_POINT_INDICES = [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5]
 const CREATOR = `${package.name}@${package.version}`
 
 const readFiles = files =>
@@ -153,8 +154,7 @@ module.exports = async ({
       // so we skip marking an intersection if there is another point even closer
       // than this one.
       const closestNearPoint = _.minBy(
-        [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5]
-          .map(change => points[index + change])
+        NEARBY_POINT_INDICES.map(change => points[index + change])
           .filter(Boolean)
           .map(p => findClosestDifferingTrailPoint(flatVerticesEndpoints, p)),
         'distance'
@@ -265,43 +265,45 @@ module.exports = async ({
     )
   }, [])
 
-  return type === 'gpx'
-    ? new xml2js.Builder().buildObject({
-        gpx: {
-          $: {
-            xmlns: 'http://www.topografix.com/GPX/1/1',
-            'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-            version: '1.1',
-            'xsi:schemaLocation':
-              'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd',
-            creator: CREATOR
-          },
-          metadata: [
-            {
-              name: [name],
-              description: [description]
-            }
-          ],
-          trk: [
-            {
-              trkseg: [
-                {
-                  trkpt: fullPoints.map(point => ({
-                    $: {
-                      lon: point.lon,
-                      lat: point.lat
-                    },
-                    ele: [point.ele],
-                    name: []
-                  }))
-                }
-              ]
-            }
-          ]
-        }
-      })
-    : {
-        type: 'LineString',
-        coordinates: fullPoints.map(point => [point.lon, point.lat, point.ele])
+  if (type === 'gpx' || !type) {
+    return new xml2js.Builder().buildObject({
+      gpx: {
+        $: {
+          xmlns: 'http://www.topografix.com/GPX/1/1',
+          'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+          version: '1.1',
+          'xsi:schemaLocation':
+            'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd',
+          creator: CREATOR
+        },
+        metadata: [
+          {
+            name: [name],
+            description: [description]
+          }
+        ],
+        trk: [
+          {
+            trkseg: [
+              {
+                trkpt: fullPoints.map(point => ({
+                  $: {
+                    lon: point.lon,
+                    lat: point.lat
+                  },
+                  ele: [point.ele],
+                  name: []
+                }))
+              }
+            ]
+          }
+        ]
       }
+    })
+  } else if (type == 'geojson') {
+    return {
+      type: 'LineString',
+      coordinates: fullPoints.map(point => [point.lon, point.lat, point.ele])
+    }
+  }
 }

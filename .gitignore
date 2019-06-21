@@ -86,7 +86,3 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
-
-# Test data files
-.data/
-
