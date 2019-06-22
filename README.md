@@ -20,4 +20,6 @@ Find the shortest closed circuit that will visit all paths from a series of conn
 
 - [ ] Port `postman_problems` to JavaScript
 - [ ] Handle GPX files with overlapping sections
-  - [ ] Test with [Usery Mountain Regional Park](https://www.trailrunproject.com/directory/8011928/usery-mountain-regional-park)
+- [ ] Find/create connector gpx files for usery so Vista and Merkle and accessible
+- [ ] Fix Usery Desert Hawk loop
+- [ ] South Mountain?

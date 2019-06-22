@@ -66,7 +66,7 @@ module.exports = async ({
   type = 'gpx',
   filePaths,
   start,
-  names = filePaths.map(basenameNoExt),
+  names = filePaths.map(basenameNoExt).filter(f => !f.startsWith('_')),
   name = names.join(', '),
   description = `The shortest route that visits all the edges of ${names.join(
     ', '
