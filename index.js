@@ -314,6 +314,8 @@ module.exports = async ({
     )
   )
 
+  debug('Distance', routes.reduce((acc, r) => acc + +r.distance, 0))
+
   const fullPoints = routes.reduce((acc, route) => {
     const edge = fullEdges.find(
       e =>
