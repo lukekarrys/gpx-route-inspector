@@ -126,7 +126,11 @@ module.exports = async ({
 
   debug(
     'Trails points',
-    JSON.stringify(trailsPoints.map(t => t[0].name), null, 2)
+    JSON.stringify(
+      trailsPoints.map(t => `${t[0].name} -- ${t[0].total}`),
+      null,
+      2
+    )
   )
 
   const vertices = []
@@ -144,7 +148,10 @@ module.exports = async ({
     }
   }
 
-  debug('Vertices', JSON.stringify(vertices.map(v => v.id)))
+  debug(
+    'Vertices',
+    JSON.stringify(vertices.map(v => v.map(v => v.id).join(',')), null, 2)
+  )
 
   const flatVerticesEndpoints = _.flatten(vertices)
 
@@ -265,7 +272,7 @@ module.exports = async ({
 
   debug(
     'Edges',
-    JSON.stringify(fullEdges.map(e => `${e.start} -- ${e.end}`), null, 2)
+    JSON.stringify(fullEdges.map(e => `${e.start} <---> ${e.end}`), null, 2)
   )
 
   // Find the id of the vertex that matches the passed in start parameter
@@ -298,6 +305,15 @@ module.exports = async ({
     startVertex
   )
 
+  debug(
+    'Routes',
+    JSON.stringify(
+      routes.map(r => `${r.start} --> ${r.end} -- ${r.distance}`),
+      null,
+      2
+    )
+  )
+
   const fullPoints = routes.reduce((acc, route) => {
     const edge = fullEdges.find(
       e =>
@@ -309,6 +325,8 @@ module.exports = async ({
       _[edge.start !== route.start ? 'reverse' : 'identity']([...edge.points])
     )
   }, [])
+
+  debug('Full route', fullPoints.length)
 
   if (type === 'gpx' || !type) {
     return new xml2js.Builder().buildObject({

@@ -6,7 +6,6 @@ const { exec } = require('child-process-promise')
 
 module.exports = async (csv, start) => {
   const dir = process.cwd()
-  const csvPath = path.resolve(dir, '.output.csv')
   const postmanPath = path.resolve(dir, 'postman_problems')
 
   const tempCsv = await tmp.file()
@@ -29,6 +28,7 @@ module.exports = async (csv, start) => {
     .map(l => ({
       start: l[0],
       end: l[1],
+      distance: l[3],
       name: _.last(l[5].split('--'))
     }))
 }
