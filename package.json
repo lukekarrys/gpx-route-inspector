@@ -3,6 +3,12 @@
   "description": "Find the shortest closed circuit that will visit all paths from a series of connected GPX files.",
   "version": "1.0.0",
   "author": "Luke Karrys <luke@lukekarrys.com>",
+  "bin": {
+    "gpx-route-inspector": "./src/cli.js"
+  },
+  "bugs": {
+    "url": "https://github.com/lukekarrys/gpx-route-inspector/issues"
+  },
   "dependencies": {
     "@turf/turf": "^5.1.6",
     "child-process-promise": "^2.2.1",
@@ -18,6 +24,7 @@
     "eslint": "^6.0.0-rc.0",
     "prettier": "^1.18.2"
   },
+  "homepage": "https://github.com/lukekarrys/gpx-route-inspector#readme",
   "keywords": [
     "gps",
     "gpx",
@@ -25,8 +32,11 @@
     "route inspection"
   ],
   "license": "MIT",
-  "main": "index.js",
-  "private": true,
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/lukekarrys/gpx-route-inspector.git"
+  },
   "scripts": {
     "build": "./scripts/build.sh",
     "dev": "./scripts/dev.sh",
