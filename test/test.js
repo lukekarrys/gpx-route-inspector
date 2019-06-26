@@ -2,11 +2,11 @@ const test = require('ava')
 const fs = require('fs')
 const { promisify } = require('util')
 const path = require('path')
-const gpxRouteInspector = require('./index')
-const util = require('./util')
+const gpxRouteInspector = require('../src/index')
+const util = require('../src/util')
 
 const testExample = async (name, start) => {
-  const dir = path.resolve(__dirname, 'examples', name, 'routes')
+  const dir = path.resolve(__dirname, '..', 'examples', name, 'routes')
   const filePaths = (await promisify(fs.readdir)(dir)).map(f =>
     path.join(dir, f)
   )

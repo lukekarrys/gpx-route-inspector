@@ -7,7 +7,7 @@ const xml2js = require('xml2js')
 const parseXmlString = promisify(xml2js.parseString)
 const turf = require('@turf/turf')
 const routeInspector = require('./route-inspector')
-const package = require('./package.json')
+const package = require('../package.json')
 const debug = require('debug')(package.name)
 const util = require('./util')
 
