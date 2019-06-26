@@ -10,7 +10,7 @@ Find the shortest closed circuit that will visit all paths from a series of conn
 1. `cd postman_problems`
 1. Run [`postman_problems` install instructions](https://github.com/brooksandrew/postman_problems/tree/4e384767371e8d67a901712adf56deb9e3c79bf4#id2)
 1. `cd ..`
-1. `./cli.js --gpx examples/santan/routes --start 'GOLDMINE|END' --type gpx`
+1. `./src/cli.js --gpx examples/santan/routes --start 'GOLDMINE|END' --type gpx`
 
 ## Output
 
