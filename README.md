@@ -14,7 +14,9 @@ Find the shortest closed circuit that will visit all paths from a series of conn
 
 ## Output
 
-[San Tan Mountain Regional Park](./examples/santan/output.geojson)
+- [San Tan Mountain Regional Park](./examples/santan/output.geojson)
+- [Usery Mountain Regional Park](./examples/usery/output.geojson)
+- [Hawes Trail System](./examples/hawes/output.geojson)
 
 ## TODO
 
