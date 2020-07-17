@@ -13,7 +13,7 @@
     "@turf/turf": "^5.1.6",
     "child-process-promise": "^2.2.1",
     "debug": "^4.1.1",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.19",
     "node-geo-distance": "^1.2.0",
     "tmp-promise": "^2.0.1",
     "xml2js": "^0.4.19",
