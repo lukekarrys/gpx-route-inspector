@@ -17,7 +17,7 @@
     "node-geo-distance": "^1.2.0",
     "tmp-promise": "^2.0.1",
     "xml2js": "^0.4.19",
-    "yargs-parser": "^13.1.1"
+    "yargs-parser": "^13.1.2"
   },
   "devDependencies": {
     "ava": "^2.1.0",
